@@ -1,10 +1,13 @@
 # Site Details Form — Setup Guide
 
-A simple, secure form (Name, Phone, Email, Address, Site Image) built with
+A simple, secure form (Name, Phone, Email, Address, Site Images) built with
 Next.js + Tailwind v4. On submit it:
 
-1. Uploads the image to a Google Drive folder you control.
-2. Sends the form data + a link to the uploaded image to a webhook of your choice.
+1. Creates a subfolder named `Client Name - email@example.com` inside your
+   Google Drive folder.
+2. Uploads all submitted images into that subfolder, plus a
+   `lead-details.txt` with the client's contact info and image links.
+3. Sends the form data + Drive links to a webhook of your choice.
 
 ## 1. Google Drive setup (image storage)
 
@@ -18,11 +21,11 @@ Next.js + Tailwind v4. On submit it:
 6. **The destination folder must live inside a [Shared Drive](https://support.google.com/a/users/answer/9310249)**, not a regular "My Drive" folder. Service accounts have zero personal storage quota, so uploads to a normal My Drive folder fail with `403: Service Accounts do not have storage quota` even if the folder is shared with them. Shared Drives are owned by the Drive itself, not by any one account, so this doesn't apply. (Shared Drives require Google Workspace — they aren't available on personal @gmail.com accounts.)
    - Create a Shared Drive (or use an existing one) → create/pick a folder inside it for site images.
    - Add the service account's email (the `client_email` above) as a **Content Manager** (or higher) member of the Shared Drive.
-7. Copy the folder ID from its URL: `https://drive.google.com/drive/folders/<FOLDER_ID>` → `GOOGLE_DRIVE_FOLDER_ID`.
+7. Copy the folder ID from its URL: `https://drive.google.com/drive/folders/<FOLDER_ID>` → `GOOGLE_DRIVE_FOLDER_ID`. This is the root folder — a new subfolder is created under it for every submission.
 
-Each uploaded image is also given a public "anyone with the link can view"
-permission automatically, so the link sent to your webhook always opens
-without extra sharing steps.
+Each created subfolder and file is also given a public "anyone with the link
+can view" permission automatically, so the links sent to your webhook always
+open without extra sharing steps.
 
 ## 2. Webhook setup
 
@@ -40,6 +43,7 @@ The payload sent looks like:
   "phone": "+61 400 000 000",
   "email": "jane@example.com",
   "address": "123 Example Street, Suburb, State, Postcode",
+  "clientFolderLink": "https://drive.google.com/drive/folders/...",
   "images": [
     {
       "name": "photo1.jpg",

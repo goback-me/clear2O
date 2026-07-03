@@ -6,7 +6,7 @@ import {
   MAX_IMAGES,
   contactFieldsSchema,
 } from "@/lib/schema";
-import { uploadImageToDrive } from "@/lib/googleDrive";
+import { createClientFolder, uploadFileToDrive } from "@/lib/googleDrive";
 import { sendToWebhook } from "@/lib/webhook";
 import { isRateLimited } from "@/lib/rateLimit";
 
@@ -94,12 +94,16 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const submittedAt = new Date().toISOString();
+    const clientFolder = await createClientFolder({ name, email });
+
     const uploadedImages = await Promise.all(
       sniffedImages.map(async ({ file, buffer, mime, ext }, index) => {
-        const uploaded = await uploadImageToDrive({
+        const uploaded = await uploadFileToDrive({
           buffer,
-          filename: `${Date.now()}-${sanitizeFilename(name)}-${index + 1}.${ext}`,
+          filename: `image-${index + 1}.${ext}`,
           mimeType: mime,
+          parentFolderId: clientFolder.id,
         });
         return {
           name: file.name,
@@ -111,13 +115,21 @@ export async function POST(req: NextRequest) {
       })
     );
 
+    await uploadFileToDrive({
+      buffer: Buffer.from(buildLeadDetailsText({ name, phone, email, address, submittedAt, images: uploadedImages })),
+      filename: "lead-details.txt",
+      mimeType: "text/plain",
+      parentFolderId: clientFolder.id,
+    });
+
     await sendToWebhook({
       name,
       phone,
       email,
       address,
+      clientFolderLink: clientFolder.viewLink,
       images: uploadedImages,
-      submittedAt: new Date().toISOString(),
+      submittedAt,
     });
 
     return NextResponse.json({ ok: true });
@@ -130,10 +142,25 @@ export async function POST(req: NextRequest) {
   }
 }
 
-function sanitizeFilename(input: string): string {
-  return input
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60) || "site-image";
+function buildLeadDetailsText(params: {
+  name: string;
+  phone: string;
+  email: string;
+  address: string;
+  submittedAt: string;
+  images: { name: string; driveViewLink: string }[];
+}): string {
+  const lines = [
+    "Site Details Form Submission",
+    "=============================",
+    `Name:          ${params.name}`,
+    `Phone:         ${params.phone}`,
+    `Email:         ${params.email}`,
+    `Address:       ${params.address}`,
+    `Submitted at:  ${params.submittedAt}`,
+    "",
+    `Images (${params.images.length}):`,
+    ...params.images.map((img, i) => `  ${i + 1}. ${img.name} — ${img.driveViewLink}`),
+  ];
+  return lines.join("\n") + "\n";
 }

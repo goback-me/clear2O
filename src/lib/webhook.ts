@@ -5,6 +5,7 @@ export async function sendToWebhook(payload: {
   phone: string;
   email: string;
   address: string;
+  clientFolderLink: string;
   images: { name: string; driveFileId: string; driveViewLink: string; mimeType: string; size: number }[];
   submittedAt: string;
 }): Promise<void> {

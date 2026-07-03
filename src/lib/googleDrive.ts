@@ -22,18 +22,55 @@ function getDriveClient() {
   return google.drive({ version: "v3", auth });
 }
 
-export async function uploadImageToDrive(params: {
+async function makePublic(drive: ReturnType<typeof google.drive>, fileId: string) {
+  await drive.permissions.create({
+    fileId,
+    requestBody: { role: "reader", type: "anyone" },
+    supportsAllDrives: true,
+  });
+}
+
+/** Creates a per-submission subfolder ("Client Name - email@example.com") under the root Drive folder. */
+export async function createClientFolder(params: {
+  name: string;
+  email: string;
+}): Promise<{ id: string; viewLink: string }> {
+  const drive = getDriveClient();
+  const parentId = getEnv("GOOGLE_DRIVE_FOLDER_ID");
+
+  const folder = await drive.files.create({
+    requestBody: {
+      name: `${params.name} - ${params.email}`,
+      mimeType: "application/vnd.google-apps.folder",
+      parents: [parentId],
+    },
+    fields: "id, webViewLink",
+    supportsAllDrives: true,
+  });
+
+  const folderId = folder.data.id;
+  if (!folderId) throw new Error("Google Drive did not return a folder id");
+
+  await makePublic(drive, folderId);
+
+  return {
+    id: folderId,
+    viewLink: folder.data.webViewLink ?? `https://drive.google.com/drive/folders/${folderId}`,
+  };
+}
+
+export async function uploadFileToDrive(params: {
   buffer: Buffer;
   filename: string;
   mimeType: string;
+  parentFolderId: string;
 }): Promise<{ id: string; viewLink: string }> {
   const drive = getDriveClient();
-  const folderId = getEnv("GOOGLE_DRIVE_FOLDER_ID");
 
   const file = await drive.files.create({
     requestBody: {
       name: params.filename,
-      parents: [folderId],
+      parents: [params.parentFolderId],
     },
     media: {
       mimeType: params.mimeType,
@@ -49,14 +86,9 @@ export async function uploadImageToDrive(params: {
   const fileId = file.data.id;
   if (!fileId) throw new Error("Google Drive did not return a file id");
 
-  // Folder-level sharing (set once on the destination folder) already covers
-  // access in the common case; this per-file grant guarantees the emailed
-  // webhook link works even if the folder is private to the service account.
-  await drive.permissions.create({
-    fileId,
-    requestBody: { role: "reader", type: "anyone" },
-    supportsAllDrives: true,
-  });
+  // The parent client folder is already made public on creation, but this
+  // per-file grant guarantees the link works even if that ever changes.
+  await makePublic(drive, fileId);
 
   return {
     id: fileId,
