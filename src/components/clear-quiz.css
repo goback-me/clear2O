@@ -22,7 +22,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 48px 20px;
+  /* padding: 48px 20px; */
   background: var(--ink);
 }
 
@@ -35,7 +35,7 @@
   border: 1px solid var(--line);
   border-radius: 28px;
   padding: 40px;
-  box-shadow: 0 50px 100px -40px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 50px 100px -40px rgba(0, 0, 0, 0.2);
   color: var(--white);
 }
 @media (max-width: 600px) {
