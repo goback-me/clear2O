@@ -35,7 +35,7 @@
   border: 1px solid var(--line);
   border-radius: 28px;
   padding: 40px;
-  box-shadow: 0 50px 100px -40px rgba(0, 0, 0, 0.2);
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
   color: var(--white);
 }
 @media (max-width: 600px) {
@@ -79,8 +79,8 @@
 .c2o-opt .oc-icon svg { width: 21px; height: 21px; color: var(--blue-2); }
 .c2o-opt.selected .oc-icon { background: var(--blue-2); }
 .c2o-opt.selected .oc-icon svg { color: #fff; }
-.c2o-opt .oc-text h5 { font-size: 0.98rem; font-weight: 700; margin-bottom: 3px; }
-.c2o-opt .oc-text p { font-size: 0.82rem; color: var(--muted); font-weight: 500; margin: 0; }
+.c2o-opt .oc-text h5 { font-size: 0.98rem; font-weight: 700; margin-bottom: 3px; text-align:left; }
+.c2o-opt .oc-text p { font-size: 0.82rem; color: var(--muted); font-weight: 500; margin: 0; text-align:left;}
 
 .c2o-secure-note {
   display: flex; align-items: center; justify-content: center; gap: 8px;
