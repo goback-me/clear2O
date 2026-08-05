@@ -35,7 +35,7 @@
       "#" + targetId + ", #" + targetId + " *{box-sizing:border-box;}" +
       "#" + targetId + "{font-family:'General Sans',sans-serif;}" +
       "#" + targetId + " .c2o-bg{position:relative;display:flex;align-items:center;justify-content:center;padding:48px 20px;background:#f6f7fb;border-radius:28px;}" +
-      "#" + targetId + " .c2o-card{position:relative;z-index:2;width:100%;max-width:480px;background:#fff;border:1px solid rgba(15,23,42,.09);border-radius:28px;padding:40px;box-shadow:0 50px 100px -40px rgba(0,0,0,.7);color:#0e1116;}" +
+      "#" + targetId + " .c2o-card{position:relative;z-index:2;width:100%;max-width:480px;background:#fff;border:1px solid rgba(15,23,42,.09);border-radius:28px;padding:40px;box-shadow:0 8px 24px rgba(0,0,0,.12);color:#0e1116;}" +
       "@media(max-width:600px){#" + targetId + " .c2o-card{padding:30px 22px}}" +
       "#" + targetId + " .c2o-progress{display:flex;gap:8px;margin-bottom:34px;}" +
       "#" + targetId + " .c2o-progress .dot{height:5px;flex:1;border-radius:100px;background:rgba(15,23,42,.08);overflow:hidden;}" +
