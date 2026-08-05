@@ -6,7 +6,7 @@ import {
   MAX_IMAGES,
   contactFieldsSchema,
 } from "@/lib/schema";
-import { createClientFolder, uploadFileToDrive } from "@/lib/googleDrive";
+import { createClientFolder, uploadFileToDrive, driveFolderLink } from "@/lib/googleDrive";
 import { sendToWebhook } from "@/lib/webhook";
 import { isRateLimited } from "@/lib/rateLimit";
 import { trackingParamsFromFormData } from "@/lib/trackingParams";
@@ -78,6 +78,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const rootFolderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+  if (!rootFolderId) {
+    return NextResponse.json({ error: "Server is not configured for uploads." }, { status: 500 });
+  }
+
   const sniffedImages: { file: File; buffer: Buffer; mime: string; ext: string }[] = [];
   for (const file of images) {
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -128,6 +133,7 @@ export async function POST(req: NextRequest) {
       phone,
       email,
       address,
+      mainFolderLink: driveFolderLink(rootFolderId),
       clientFolderLink: clientFolder.viewLink,
       images: uploadedImages,
       submittedAt,

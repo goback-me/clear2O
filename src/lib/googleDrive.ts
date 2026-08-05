@@ -22,6 +22,10 @@ function getDriveClient() {
   return google.drive({ version: "v3", auth });
 }
 
+export function driveFolderLink(folderId: string): string {
+  return `https://drive.google.com/drive/folders/${folderId}`;
+}
+
 async function makePublic(drive: ReturnType<typeof google.drive>, fileId: string) {
   await drive.permissions.create({
     fileId,
@@ -55,7 +59,7 @@ export async function createClientFolder(params: {
 
   return {
     id: folderId,
-    viewLink: folder.data.webViewLink ?? `https://drive.google.com/drive/folders/${folderId}`,
+    viewLink: folder.data.webViewLink ?? driveFolderLink(folderId),
   };
 }
 

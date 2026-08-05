@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fileTypeFromBuffer } from "file-type";
 import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_BYTES, MAX_IMAGES } from "@/lib/schema";
-import { createClientFolder, uploadFileToDrive } from "@/lib/googleDrive";
+import { createClientFolder, uploadFileToDrive, driveFolderLink } from "@/lib/googleDrive";
 import { sendToWebhook } from "@/lib/webhook";
 import { isRateLimited } from "@/lib/rateLimit";
 import { withCors, corsPreflight } from "@/lib/cors";
@@ -104,6 +104,7 @@ export async function POST(req: NextRequest) {
     await sendToWebhook({
       name: name || undefined,
       email: email || undefined,
+      mainFolderLink: driveFolderLink(rootFolderId),
       clientFolderLink: clientFolder?.viewLink,
       images: uploadedImages,
       submittedAt,
