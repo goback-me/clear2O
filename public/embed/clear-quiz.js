@@ -34,7 +34,7 @@
       '@import url("https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700,800&display=swap");' +
       "#" + targetId + ", #" + targetId + " *{box-sizing:border-box;}" +
       "#" + targetId + "{font-family:'General Sans',sans-serif;}" +
-      "#" + targetId + " .c2o-bg{position:relative;display:flex;align-items:center;justify-content:center;padding:48px 20px;background:#f6f7fb;border-radius:28px;}" +
+      "#" + targetId + " .c2o-bg{position:relative;display:flex;align-items:center;justify-content:center;background:#f6f7fb;}" +
       "#" + targetId + " .c2o-card{position:relative;z-index:2;width:100%;max-width:480px;background:#fff;border:1px solid rgba(15,23,42,.09);border-radius:28px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,.12);color:#0e1116;}" +
       "@media(max-width:600px){#" + targetId + " .c2o-card{padding:30px 22px}}" +
       "@media(max-width:480px){#" + targetId + " .c2o-card{padding:20px 16px;border-radius:22px}}" +
@@ -69,14 +69,6 @@
       "#" + targetId + " .c2o-btn-ghost{background:transparent;color:#0e1116;border:1.5px solid rgba(15,23,42,.18);}" +
       "#" + targetId + " .c2o-btn-block{width:100%;}" +
       "#" + targetId + " .c2o-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}" +
-      "#" + targetId + " .c2o-confirm{text-align:center;padding:10px 0 0;}" +
-      "#" + targetId + " .tick-circle{width:74px;height:74px;border-radius:50%;background:rgba(40,196,138,.15);border:1.5px solid rgba(40,196,138,.4);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;}" +
-      "#" + targetId + " .tick-circle svg{width:34px;height:34px;color:#1fae7a;}" +
-      "#" + targetId + " .c2o-summary{text-align:left;background:#f2f4f9;border:1px solid rgba(15,23,42,.09);border-radius:16px;padding:20px 22px;margin-bottom:26px;font-size:.88rem;}" +
-      "#" + targetId + " .c2o-summary div{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(15,23,42,.09);}" +
-      "#" + targetId + " .c2o-summary div:last-child{border-bottom:none;}" +
-      "#" + targetId + " .c2o-summary span:first-child{color:rgba(14,17,22,.44);font-weight:600;}" +
-      "#" + targetId + " .c2o-summary span:last-child{font-weight:700;text-align:right;}" +
       "#" + targetId + " .c2o-err{color:#e5484d;font-size:.85rem;margin-bottom:12px;}";
     document.head.appendChild(style);
   }
@@ -88,7 +80,6 @@
     cash: '<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
     na: '<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/>',
     shield: '<rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
-    check: '<polyline points="20 6 9 17 4 12"/>',
   };
 
   function svg(path, strokeWidth) {
@@ -171,25 +162,6 @@
         ">" +
         (submitting ? "Submitting…" : "Reserve My Free Installation →") +
         "</button></div>";
-    } else if (step === 7) {
-      body =
-        '<div class="c2o-confirm"><div class="tick-circle">' +
-        svg(ICONS.check, 2.5) +
-        "</div><h3>You're reserved, " +
-        escapeHtml(state.name.split(" ")[0] || "there") +
-        ' 🎉</h3><p>A Clear2O specialist will call within 1 business day to confirm your free installation and lock in your fixed price.</p>' +
-        '<div class="c2o-summary"><div><span>Owns home</span><span>' +
-        escapeHtml(state.ownsHome || "-") +
-        "</span></div><div><span>Financing</span><span>" +
-        escapeHtml(state.financing || "-") +
-        "</span></div><div><span>Contact</span><span>" +
-        escapeHtml(state.phone || "-") +
-        " · " +
-        escapeHtml(state.email || "-") +
-        "</span></div><div><span>Suburb</span><span>" +
-        escapeHtml(state.suburb || "-") +
-        '</span></div></div>' +
-        '<a href="tel:0448162427" class="c2o-btn c2o-btn-ghost c2o-btn-block">Or call us now on 0448 162 427</a></div>';
     }
 
     root.innerHTML = '<div class="c2o-bg"><div class="c2o-card">' + progress + body + "</div></div>";
@@ -304,8 +276,7 @@
         });
       })
       .then(function () {
-        submitting = false;
-        goToStep(7);
+        window.location.href = "https://clear20.findlocal.au/leadgen/thankyoupage";
       })
       .catch(function (err) {
         submitting = false;

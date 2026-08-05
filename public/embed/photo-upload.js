@@ -56,12 +56,7 @@
       "#" + targetId + " .u-thumb button{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;cursor:pointer;font-size:13px;line-height:1;}" +
       "#" + targetId + " .u-error{margin-top:14px;border-radius:8px;background:#fef2f2;color:#b91c1c;font-size:13px;padding:10px 14px;}" +
       "#" + targetId + " .u-btn{margin-top:20px;width:100%;border:none;border-radius:8px;padding:14px;font-size:14px;font-weight:800;letter-spacing:.3px;color:#fff;background:#297EFF;cursor:pointer;transition:background .2s ease;}" +
-      "#" + targetId + " .u-btn:disabled{background:#c9d3e0;cursor:not-allowed;}" +
-      "#" + targetId + " .u-success{border-radius:16px;border:1px solid #a7f3d0;background:#ecfdf5;padding:32px;text-align:center;}" +
-      "#" + targetId + " .u-success .u-check{margin:0 auto 16px;width:48px;height:48px;border-radius:50%;background:#d1fae5;display:flex;align-items:center;justify-content:center;}" +
-      "#" + targetId + " .u-success .u-check svg{width:24px;height:24px;color:#059669;}" +
-      "#" + targetId + " .u-success h2{font-size:18px;font-weight:700;color:#065f46;margin:0 0 4px;}" +
-      "#" + targetId + " .u-success p{font-size:14px;color:#047857;margin:0;}";
+      "#" + targetId + " .u-btn:disabled{background:#c9d3e0;cursor:not-allowed;}";
     document.head.appendChild(style);
   }
 
@@ -69,17 +64,9 @@
   var nextId = 0;
   var isDragging = false;
   var errorMessage = "";
-  var status = "idle"; // idle | compressing | submitting | success | error
+  var status = "idle"; // idle | compressing | submitting | error
 
   function render() {
-    if (status === "success") {
-      root.innerHTML =
-        '<div class="u-success"><div class="u-check">' +
-        checkIcon() +
-        "</div><h2>Thank you!</h2><p>Your photo has been uploaded successfully.</p></div>";
-      return;
-    }
-
     var busy = status === "submitting" || status === "compressing";
     var btnLabel =
       status === "compressing" ? "Processing…" : status === "submitting" ? "Uploading…" : "Upload & Continue";
@@ -122,9 +109,6 @@
 
   function arrowIcon() {
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-6 6m6-6l6 6"/></svg>';
-  }
-  function checkIcon() {
-    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>';
   }
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
@@ -283,8 +267,7 @@
           });
       })
       .then(function () {
-        status = "success";
-        render();
+        window.location.href = "https://clear20.findlocal.au/booking-page";
       })
       .catch(function (err) {
         status = "error";
