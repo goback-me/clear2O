@@ -1,8 +1,10 @@
 "use client";
 
 import { useRef, useState, type FormEvent } from "react";
+import { useSearchParams } from "next/navigation";
 import { compressImage } from "@/lib/compressImage";
 import { MAX_IMAGE_BYTES, MAX_IMAGES } from "@/lib/schema";
+import { trackingParamsFromSearchParams } from "@/lib/trackingParams";
 
 type Status = "idle" | "compressing" | "submitting" | "success" | "error";
 
@@ -15,6 +17,7 @@ type ImageItem = {
 const MAX_IMAGE_MB = Math.round(MAX_IMAGE_BYTES / (1024 * 1024));
 
 export default function UploadForm() {
+  const searchParams = useSearchParams();
   const [status, setStatus] = useState<Status>("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -98,6 +101,9 @@ export default function UploadForm() {
     data.delete("image");
     images.forEach((img) => data.append("image", img.file));
     data.set("renderedAt", String(renderedAt));
+    Object.entries(trackingParamsFromSearchParams(searchParams)).forEach(([key, value]) =>
+      data.set(key, value)
+    );
 
     setStatus("submitting");
     try {
@@ -199,7 +205,7 @@ export default function UploadForm() {
             handleFiles(e.dataTransfer.files);
           }}
           onClick={() => inputRef.current?.click()}
-          className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-6 text-center transition-colors ${
+          className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed p-8 text-center transition-colors ${
             isDragging
               ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40"
               : fieldErrors.image
@@ -207,14 +213,16 @@ export default function UploadForm() {
                 : "border-gray-300 hover:border-indigo-400 dark:border-gray-700 dark:hover:border-indigo-600"
           }`}
         >
-          <svg className="h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l-3.75 3.75M12 9.75l3.75 3.75M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
-          </svg>
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            <span className="font-medium text-indigo-600 dark:text-indigo-400">Click to upload</span> or drag and drop
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-600">
+            <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0l-6 6m6-6l6 6" />
+            </svg>
+          </div>
+          <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            Tap to take a photo or upload from your gallery
           </div>
           <p className="text-xs text-gray-400">
-            JPEG, PNG or WEBP, up to {MAX_IMAGE_MB}MB each — up to {MAX_IMAGES} images
+            JPG or PNG, up to {MAX_IMAGE_MB}MB — up to {MAX_IMAGES} images
           </p>
           <input
             ref={inputRef}
@@ -265,9 +273,9 @@ export default function UploadForm() {
       <button
         type="submit"
         disabled={isBusy}
-        className="w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60 disabled:bg-gray-300 dark:disabled:bg-gray-700"
       >
-        {status === "compressing" ? "Processing images…" : status === "submitting" ? "Submitting…" : "Submit"}
+        {status === "compressing" ? "Processing images…" : status === "submitting" ? "Submitting…" : "Upload & Continue"}
       </button>
     </form>
   );

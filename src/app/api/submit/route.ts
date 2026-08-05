@@ -9,6 +9,7 @@ import {
 import { createClientFolder, uploadFileToDrive } from "@/lib/googleDrive";
 import { sendToWebhook } from "@/lib/webhook";
 import { isRateLimited } from "@/lib/rateLimit";
+import { trackingParamsFromFormData } from "@/lib/trackingParams";
 
 export const runtime = "nodejs";
 
@@ -130,6 +131,7 @@ export async function POST(req: NextRequest) {
       clientFolderLink: clientFolder.viewLink,
       images: uploadedImages,
       submittedAt,
+      ...trackingParamsFromFormData(form),
     });
 
     return NextResponse.json({ ok: true });

@@ -32,3 +32,35 @@ export const contactFieldsSchema = z.object({
 });
 
 export type ContactFields = z.infer<typeof contactFieldsSchema>;
+
+export const quizFieldsSchema = z.object({
+  ownsHome: z.string().min(1, "Please answer whether you own your home"),
+  financing: z.string().min(1, "Please choose a financing option"),
+  name: z.string().trim().min(2, "Please enter your full name").max(100, "Name is too long"),
+  phone: z
+    .string()
+    .trim()
+    .min(7, "Please enter a valid phone number")
+    .max(20, "Phone number is too long")
+    .regex(/^[0-9+()\-.\s]+$/, "Phone number contains invalid characters"),
+  email: z.string().trim().toLowerCase().email("Please enter a valid email address"),
+  suburb: z.string().trim().min(2, "Please enter your suburb").max(100, "Suburb is too long"),
+});
+
+export type QuizFields = z.infer<typeof quizFieldsSchema>;
+
+// Ad-attribution params appended to the landing page URL by the traffic
+// source (e.g. Facebook's {{campaign.name}} style tokens). Best-effort and
+// unvalidated beyond a length cap — forwarded to the webhook as-is.
+export const TRACKING_PARAM_KEYS = [
+  "lead_source",
+  "campaign",
+  "adset",
+  "ad_name",
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_content",
+  "utm_adset",
+  "utm_ad",
+] as const;

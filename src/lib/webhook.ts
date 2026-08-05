@@ -1,14 +1,6 @@
 import "server-only";
 
-export async function sendToWebhook(payload: {
-  name: string;
-  phone: string;
-  email: string;
-  address: string;
-  clientFolderLink: string;
-  images: { name: string; driveFileId: string; driveViewLink: string; mimeType: string; size: number }[];
-  submittedAt: string;
-}): Promise<void> {
+export async function sendToWebhook(payload: Record<string, unknown>): Promise<void> {
   const url = process.env.WEBHOOK_URL;
   if (!url) throw new Error("Missing required environment variable: WEBHOOK_URL");
 
