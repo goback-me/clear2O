@@ -7,7 +7,7 @@ import { MAX_IMAGE_BYTES, MAX_IMAGES } from "@/lib/schema";
 import { trackingParamsFromSearchParams } from "@/lib/trackingParams";
 import "./photo-upload.css";
 
-type Status = "idle" | "compressing" | "submitting" | "success" | "error";
+type Status = "idle" | "compressing" | "submitting" | "error";
 
 type ImageItem = {
   id: string;
@@ -94,25 +94,11 @@ export default function PhotoUploadForm() {
         return;
       }
 
-      setStatus("success");
+      window.location.href = "https://clear20.findlocal.au/booking-page";
     } catch {
       setStatus("error");
       setErrorMessage("Network error. Please check your connection and try again.");
     }
-  }
-
-  if (status === "success") {
-    return (
-      <div className="upload-widget-font rounded-2xl border border-emerald-200 bg-emerald-50 p-8 text-center dark:border-emerald-900 dark:bg-emerald-950">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900">
-          <svg className="h-6 w-6 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-          </svg>
-        </div>
-        <h2 className="text-lg font-semibold text-emerald-900 dark:text-emerald-100">Thank you!</h2>
-        <p className="mt-1 text-sm text-emerald-700 dark:text-emerald-300">Your photo has been uploaded successfully.</p>
-      </div>
-    );
   }
 
   const isBusy = status === "submitting" || status === "compressing";

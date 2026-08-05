@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { trackingParamsFromSearchParams } from "@/lib/trackingParams";
-import "./clear-quiz.css";
+import "/clear-quiz.css";
 
 const TOTAL_STEPS = 6;
 const AUTO_ADVANCE_MS = 350;
@@ -62,7 +62,7 @@ export default function ClearQuiz() {
         setSubmitting(false);
         return;
       }
-      setStep(7);
+      window.location.href = "https://clear20.findlocal.au/leadgen/thankyoupage";
     } catch {
       setError("Network error. Please check your connection and try again.");
       setSubmitting(false);
@@ -245,40 +245,6 @@ export default function ClearQuiz() {
           </div>
         )}
 
-        {step === 7 && (
-          <div className="c2o-confirm">
-            <div className="tick-circle">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            </div>
-            <h3>You&apos;re reserved, {state.name.split(" ")[0] || "there"} 🎉</h3>
-            <p>A Clear2O specialist will call within 1 business day to confirm your free installation and lock in your fixed price.</p>
-            <div className="c2o-confirm-summary">
-              <div>
-                <span>Owns home</span>
-                <span>{state.ownsHome || "-"}</span>
-              </div>
-              <div>
-                <span>Financing</span>
-                <span>{state.financing || "-"}</span>
-              </div>
-              <div>
-                <span>Contact</span>
-                <span>
-                  {state.phone || "-"} · {state.email || "-"}
-                </span>
-              </div>
-              <div>
-                <span>Suburb</span>
-                <span>{state.suburb || "-"}</span>
-              </div>
-            </div>
-            <a href="tel:0448162427" className="c2o-btn c2o-btn-ghost c2o-btn-block">
-              Or call us now on 0448 162 427
-            </a>
-          </div>
-        )}
       </div>
     </div>
   );
