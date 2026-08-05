@@ -43,7 +43,7 @@
     style.textContent =
       '@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");' +
       "#" + targetId + ", #" + targetId + " *{box-sizing:border-box;}" +
-      "#" + targetId + "{font-family:'Plus Jakarta Sans',sans-serif;}" +
+      "#" + targetId + "{font-family:'Plus Jakarta Sans',sans-serif;margin:32px 0;}" +
       "#" + targetId + " .u-drop{cursor:pointer;border-radius:14px;border:1px dashed #cfd6e0;background:#fff;padding:36px 24px;text-align:center;transition:border-color .2s ease,background .2s ease;}" +
       "#" + targetId + " .u-drop.drag{border-color:#297EFF;background:#F3FAF9;}" +
       "#" + targetId + " .u-icon{margin:0 auto 16px;width:52px;height:52px;border-radius:50%;background:#297EFF;display:flex;align-items:center;justify-content:center;}" +
