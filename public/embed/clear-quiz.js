@@ -35,8 +35,9 @@
       "#" + targetId + ", #" + targetId + " *{box-sizing:border-box;}" +
       "#" + targetId + "{font-family:'General Sans',sans-serif;}" +
       "#" + targetId + " .c2o-bg{position:relative;display:flex;align-items:center;justify-content:center;padding:48px 20px;background:#f6f7fb;border-radius:28px;}" +
-      "#" + targetId + " .c2o-card{position:relative;z-index:2;width:100%;max-width:480px;background:#fff;border:1px solid rgba(15,23,42,.09);border-radius:28px;padding:40px;box-shadow:0 8px 24px rgba(0,0,0,.12);color:#0e1116;}" +
+      "#" + targetId + " .c2o-card{position:relative;z-index:2;width:100%;max-width:480px;background:#fff;border:1px solid rgba(15,23,42,.09);border-radius:28px;padding:20px;box-shadow:0 8px 24px rgba(0,0,0,.12);color:#0e1116;}" +
       "@media(max-width:600px){#" + targetId + " .c2o-card{padding:30px 22px}}" +
+      "@media(max-width:480px){#" + targetId + " .c2o-card{padding:20px 16px;border-radius:22px}}" +
       "#" + targetId + " .c2o-progress{display:flex;gap:8px;margin-bottom:34px;}" +
       "#" + targetId + " .c2o-progress .dot{height:5px;flex:1;border-radius:100px;background:rgba(15,23,42,.08);overflow:hidden;}" +
       "#" + targetId + " .c2o-progress .dot .fill{height:100%;background:linear-gradient(90deg,#4d6dff,#7d9bff);transition:width .4s ease;width:0;}" +
@@ -51,8 +52,8 @@
       "#" + targetId + " .oc-icon svg{width:21px;height:21px;color:#3b62ff;}" +
       "#" + targetId + " .c2o-opt.selected .oc-icon{background:#3b62ff;}" +
       "#" + targetId + " .c2o-opt.selected .oc-icon svg{color:#fff;}" +
-      "#" + targetId + " .oc-text h5{font-size:.98rem;font-weight:700;margin-bottom:3px;}" +
-      "#" + targetId + " .oc-text p{font-size:.82rem;color:rgba(14,17,22,.64);font-weight:500;margin:0;}" +
+      "#" + targetId + " .oc-text h5{font-size:.98rem;font-weight:700;margin-bottom:3px;text-align:left;}" +
+      "#" + targetId + " .oc-text p{font-size:.82rem;color:rgba(14,17,22,.64);font-weight:500;margin:0;text-align:left;}" +
       "#" + targetId + " .c2o-secure{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:22px;padding-top:18px;border-top:1px solid rgba(15,23,42,.09);font-size:.78rem;color:rgba(14,17,22,.44);}" +
       "#" + targetId + " .c2o-secure svg{width:14px;height:14px;flex-shrink:0;}" +
       "#" + targetId + " .c2o-field{margin-bottom:16px;}" +
