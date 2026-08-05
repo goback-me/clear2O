@@ -23,28 +23,7 @@
   align-items: center;
   justify-content: center;
   padding: 48px 20px;
-  background: #12224d;
-  overflow: hidden;
-}
-.c2o-bg::before {
-  content: "";
-  position: absolute;
-  inset: -15%;
-  background: radial-gradient(46% 50% at 14% 6%, rgba(255, 255, 255, 0.22), transparent 65%),
-    radial-gradient(60% 65% at 90% -8%, rgba(90, 135, 255, 0.8), transparent 65%),
-    radial-gradient(55% 58% at 102% 96%, rgba(40, 68, 168, 0.75), transparent 62%),
-    radial-gradient(42% 44% at 2% 98%, rgba(160, 185, 255, 0.3), transparent 62%),
-    linear-gradient(165deg, #16255a 0%, #1f42a0 42%, #274a9e 68%, #142048 100%);
-  animation: c2o-mesh-drift 24s ease-in-out infinite alternate;
-  z-index: 0;
-}
-@keyframes c2o-mesh-drift {
-  0% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(-2.5%, 1.5%) scale(1.04); }
-  100% { transform: translate(2%, -1.5%) scale(1.02); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .c2o-bg::before { animation: none; }
+  background: var(--ink);
 }
 
 .c2o-card {
