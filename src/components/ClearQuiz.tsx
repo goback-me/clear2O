@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { trackingParamsFromSearchParams } from "@/lib/trackingParams";
-import "/clear-quiz.css";
+import "./clear-quiz.css";
 
 const TOTAL_STEPS = 6;
 const AUTO_ADVANCE_MS = 350;
