@@ -16,17 +16,23 @@ type ImageItem = {
 };
 
 const MAX_IMAGE_MB = Math.round(MAX_IMAGE_BYTES / (1024 * 1024));
+const EMAIL_RE = /^\S+@\S+\.\S+$/;
+const PHONE_RE = /^[0-9+()\-.\s]{7,20}$/;
 
 export default function PhotoUploadForm() {
   const searchParams = useSearchParams();
-  const name = searchParams.get("name") ?? "";
-  const email = searchParams.get("email") ?? "";
+  const paramName = searchParams.get("name") ?? "";
+  const paramEmail = searchParams.get("email") ?? "";
+  const paramPhone = searchParams.get("phone") ?? "";
+  const hasLeadParams = Boolean(paramName && paramEmail && paramPhone);
   const tracking = trackingParamsFromSearchParams(searchParams);
 
   const [status, setStatus] = useState<Status>("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const [images, setImages] = useState<ImageItem[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [contact, setContact] = useState({ name: "", email: "", phone: "" });
+  const [contactErrors, setContactErrors] = useState<Record<string, string>>({});
 
   const inputRef = useRef<HTMLInputElement>(null);
   const nextId = useRef(0);
@@ -75,12 +81,31 @@ export default function PhotoUploadForm() {
       setErrorMessage("Please attach at least one photo.");
       return;
     }
+
+    let name = paramName;
+    let email = paramEmail;
+    let phone = paramPhone;
+
+    if (!hasLeadParams) {
+      const errors: Record<string, string> = {};
+      if (contact.name.trim().length < 2) errors.name = "Please enter your full name";
+      if (!EMAIL_RE.test(contact.email.trim())) errors.email = "Please enter a valid email address";
+      if (!PHONE_RE.test(contact.phone.trim())) errors.phone = "Please enter a valid phone number";
+      setContactErrors(errors);
+      if (Object.keys(errors).length > 0) return;
+
+      name = contact.name.trim();
+      email = contact.email.trim();
+      phone = contact.phone.trim();
+    }
+
     setErrorMessage("");
     setStatus("submitting");
 
     const data = new FormData();
-    if (name) data.set("name", name);
-    if (email) data.set("email", email);
+    data.set("name", name);
+    data.set("email", email);
+    data.set("phone", phone);
     Object.entries(tracking).forEach(([key, value]) => data.set(key, value));
     images.forEach((img) => data.append("image", img.file));
 
@@ -105,6 +130,37 @@ export default function PhotoUploadForm() {
 
   return (
     <div className="upload-widget-font space-y-5">
+      {!hasLeadParams && (
+        <div className="space-y-3">
+          <ContactField
+            label="Full name"
+            value={contact.name}
+            error={contactErrors.name}
+            onChange={(v) => setContact((p) => ({ ...p, name: v }))}
+            placeholder="Jane Smith"
+            autoComplete="name"
+          />
+          <ContactField
+            label="Email"
+            value={contact.email}
+            error={contactErrors.email}
+            onChange={(v) => setContact((p) => ({ ...p, email: v }))}
+            placeholder="jane@example.com"
+            type="email"
+            autoComplete="email"
+          />
+          <ContactField
+            label="Phone number"
+            value={contact.phone}
+            error={contactErrors.phone}
+            onChange={(v) => setContact((p) => ({ ...p, phone: v }))}
+            placeholder="+61 400 000 000"
+            type="tel"
+            autoComplete="tel"
+          />
+        </div>
+      )}
+
       <div
         onDragOver={(e) => {
           e.preventDefault();
@@ -181,6 +237,41 @@ export default function PhotoUploadForm() {
       >
         {status === "compressing" ? "Processing…" : status === "submitting" ? "Uploading…" : "Upload & Continue"}
       </button>
+    </div>
+  );
+}
+
+function ContactField({
+  label,
+  value,
+  error,
+  onChange,
+  placeholder,
+  type = "text",
+  autoComplete,
+}: {
+  label: string;
+  value: string;
+  error?: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  type?: string;
+  autoComplete?: string;
+}) {
+  return (
+    <div>
+      <label className="mb-1.5 block text-sm font-medium text-[#1E1E1E]">{label}</label>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        className={`w-full rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors ${
+          error ? "border-red-300 focus:border-red-500" : "border-[#cfd6e0] focus:border-[#297EFF]"
+        }`}
+      />
+      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
     </div>
   );
 }

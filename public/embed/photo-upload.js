@@ -13,12 +13,15 @@
     return;
   }
 
-  // Only present when this page was reached via a redirect from an earlier
-  // lead-capture form — used server-side to file the upload under that
-  // client's own Drive folder instead of the shared root folder.
+  // Either passed through as a redirect param from an earlier lead-capture
+  // form, or collected directly on this widget when those params are absent.
   var pageParams = new URLSearchParams(window.location.search);
   var leadName = pageParams.get("name") || "";
   var leadEmail = pageParams.get("email") || "";
+  var leadPhone = pageParams.get("phone") || "";
+  var hasLeadParams = Boolean(leadName && leadEmail && leadPhone);
+  var EMAIL_RE = /^\S+@\S+\.\S+$/;
+  var PHONE_RE = /^[0-9+()\-.\s]{7,20}$/;
 
   var TRACKING_PARAM_KEYS = [
     "lead_source", "campaign", "adset", "ad_name",
@@ -56,7 +59,13 @@
       "#" + targetId + " .u-thumb button{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;cursor:pointer;font-size:13px;line-height:1;}" +
       "#" + targetId + " .u-error{margin-top:14px;border-radius:8px;background:#fef2f2;color:#b91c1c;font-size:13px;padding:10px 14px;}" +
       "#" + targetId + " .u-btn{margin-top:20px;width:100%;border:none;border-radius:8px;padding:14px;font-size:14px;font-weight:800;letter-spacing:.3px;color:#fff;background:#297EFF;cursor:pointer;transition:background .2s ease;}" +
-      "#" + targetId + " .u-btn:disabled{background:#c9d3e0;cursor:not-allowed;}";
+      "#" + targetId + " .u-btn:disabled{background:#c9d3e0;cursor:not-allowed;}" +
+      "#" + targetId + " .u-contact{margin-bottom:20px;}" +
+      "#" + targetId + " .u-field{margin-bottom:12px;}" +
+      "#" + targetId + " .u-field label{display:block;font-size:13px;font-weight:600;color:#1E1E1E;margin-bottom:6px;}" +
+      "#" + targetId + " .u-field input{width:100%;box-sizing:border-box;border:1px solid #cfd6e0;border-radius:8px;padding:10px 14px;font-size:14px;font-family:inherit;}" +
+      "#" + targetId + " .u-field input.err{border-color:#fca5a5;}" +
+      "#" + targetId + " .u-field .u-ferr{margin-top:4px;font-size:12px;color:#dc2626;}";
     document.head.appendChild(style);
   }
 
@@ -65,6 +74,8 @@
   var isDragging = false;
   var errorMessage = "";
   var status = "idle"; // idle | compressing | submitting | error
+  var contact = { name: "", email: "", phone: "" };
+  var contactErrors = {};
 
   function render() {
     var busy = status === "submitting" || status === "compressing";
@@ -85,8 +96,15 @@
       thumbs += "</div>";
     }
 
+    var contactHtml = hasLeadParams ? "" : '<div class="u-contact">' +
+      contactField("name", "Full name", "text", "Jane Smith") +
+      contactField("email", "Email", "email", "jane@example.com") +
+      contactField("phone", "Phone number", "tel", "+61 400 000 000") +
+      "</div>";
+
     root.innerHTML =
       '<div>' +
+      contactHtml +
       '<div class="u-drop' +
       (isDragging ? " drag" : "") +
       '"><div class="u-icon">' +
@@ -107,6 +125,27 @@
     wireEvents();
   }
 
+  function contactField(key, label, type, placeholder) {
+    var err = contactErrors[key];
+    return (
+      '<div class="u-field"><label>' +
+      label +
+      '</label><input type="' +
+      type +
+      '" id="c2o-contact-' +
+      key +
+      '" value="' +
+      escapeHtml(contact[key]) +
+      '" placeholder="' +
+      placeholder +
+      '" class="' +
+      (err ? "err" : "") +
+      '">' +
+      (err ? '<div class="u-ferr">' + escapeHtml(err) + "</div>" : "") +
+      "</div>"
+    );
+  }
+
   function arrowIcon() {
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19V5m0 0l-6 6m6-6l6 6"/></svg>';
   }
@@ -117,6 +156,11 @@
   }
 
   function wireEvents() {
+    ["name", "email", "phone"].forEach(function (key) {
+      var el = document.getElementById("c2o-contact-" + key);
+      if (el) el.addEventListener("input", function () { contact[key] = el.value; });
+    });
+
     var drop = root.querySelector(".u-drop");
     var input = document.getElementById("c2o-file-input");
 
@@ -241,13 +285,34 @@
       render();
       return;
     }
+
+    var name = leadName;
+    var email = leadEmail;
+    var phone = leadPhone;
+
+    if (!hasLeadParams) {
+      var errors = {};
+      if (contact.name.trim().length < 2) errors.name = "Please enter your full name";
+      if (!EMAIL_RE.test(contact.email.trim())) errors.email = "Please enter a valid email address";
+      if (!PHONE_RE.test(contact.phone.trim())) errors.phone = "Please enter a valid phone number";
+      contactErrors = errors;
+      if (Object.keys(errors).length > 0) {
+        render();
+        return;
+      }
+      name = contact.name.trim();
+      email = contact.email.trim();
+      phone = contact.phone.trim();
+    }
+
     errorMessage = "";
     status = "submitting";
     render();
 
     var data = new FormData();
-    if (leadName) data.set("name", leadName);
-    if (leadEmail) data.set("email", leadEmail);
+    data.set("name", name);
+    data.set("email", email);
+    data.set("phone", phone);
     Object.keys(leadTracking).forEach(function (key) {
       data.set(key, leadTracking[key]);
     });

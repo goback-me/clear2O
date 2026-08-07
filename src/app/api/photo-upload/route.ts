@@ -57,11 +57,11 @@ export async function POST(req: NextRequest) {
     return withCors(NextResponse.json({ error: "Server is not configured for uploads." }, { status: 500 }));
   }
 
-  // Only known when this page was reached via a redirect from an earlier
-  // lead-capture form. Without them the subfolder gets a generic name
-  // instead of being named after the client.
+  // Either passed through as a redirect param from an earlier lead-capture
+  // form, or collected directly on this page when those params are absent.
   const name = String(form.get("name") ?? "").trim();
   const email = String(form.get("email") ?? "").trim();
+  const phone = String(form.get("phone") ?? "").trim();
 
   const sniffedImages: { file: File; buffer: Buffer; mime: string; ext: string }[] = [];
   for (const file of images) {
@@ -104,6 +104,7 @@ export async function POST(req: NextRequest) {
     await sendToWebhook({
       name: name || undefined,
       email: email || undefined,
+      phone: phone || undefined,
       mainFolderLink: driveFolderLink(rootFolderId),
       clientFolderLink: clientFolder.viewLink,
       images: uploadedImages,
