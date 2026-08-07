@@ -58,8 +58,8 @@ export async function POST(req: NextRequest) {
   }
 
   // Only known when this page was reached via a redirect from an earlier
-  // lead-capture form. Without them there's no client to name a folder
-  // after, so the photos go straight into the shared root folder instead.
+  // lead-capture form. Without them the subfolder gets a generic name
+  // instead of being named after the client.
   const name = String(form.get("name") ?? "").trim();
   const email = String(form.get("email") ?? "").trim();
 
@@ -80,8 +80,8 @@ export async function POST(req: NextRequest) {
 
   try {
     const submittedAt = new Date().toISOString();
-    const clientFolder = name && email ? await createClientFolder({ name, email }) : null;
-    const uploadFolderId = clientFolder?.id ?? rootFolderId;
+    const folderName = name && email ? `${name} - ${email}` : `Clear2O - Unidentified upload - ${submittedAt}`;
+    const clientFolder = await createClientFolder({ folderName });
 
     const uploadedImages = await Promise.all(
       sniffedImages.map(async ({ file, buffer, mime, ext }, index) => {
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
           buffer,
           filename: `photo-${Date.now()}-${index + 1}.${ext}`,
           mimeType: mime,
-          parentFolderId: uploadFolderId,
+          parentFolderId: clientFolder.id,
         });
         return {
           name: file.name,
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
       name: name || undefined,
       email: email || undefined,
       mainFolderLink: driveFolderLink(rootFolderId),
-      clientFolderLink: clientFolder?.viewLink,
+      clientFolderLink: clientFolder.viewLink,
       images: uploadedImages,
       submittedAt,
       ...trackingParamsFromFormData(form),

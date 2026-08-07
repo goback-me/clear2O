@@ -34,17 +34,16 @@ async function makePublic(drive: ReturnType<typeof google.drive>, fileId: string
   });
 }
 
-/** Creates a per-submission subfolder ("Client Name - email@example.com") under the root Drive folder. */
+/** Creates a per-submission subfolder under the root Drive folder. */
 export async function createClientFolder(params: {
-  name: string;
-  email: string;
+  folderName: string;
 }): Promise<{ id: string; viewLink: string }> {
   const drive = getDriveClient();
   const parentId = getEnv("GOOGLE_DRIVE_FOLDER_ID");
 
   const folder = await drive.files.create({
     requestBody: {
-      name: `${params.name} - ${params.email}`,
+      name: params.folderName,
       mimeType: "application/vnd.google-apps.folder",
       parents: [parentId],
     },

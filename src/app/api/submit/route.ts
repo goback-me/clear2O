@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const submittedAt = new Date().toISOString();
-    const clientFolder = await createClientFolder({ name, email });
+    const clientFolder = await createClientFolder({ folderName: `${name} - ${email}` });
 
     const uploadedImages = await Promise.all(
       sniffedImages.map(async ({ file, buffer, mime, ext }, index) => {
