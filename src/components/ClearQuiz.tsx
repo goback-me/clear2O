@@ -62,7 +62,10 @@ export default function ClearQuiz() {
         setSubmitting(false);
         return;
       }
-      window.location.href = "https://clear20.findlocal.au/leadgen/thankyoupage";
+      const thankYouUrl = new URL("https://clear20.findlocal.au/leadgen/thankyoupage");
+      thankYouUrl.searchParams.set("name", state.name);
+      thankYouUrl.searchParams.set("email", state.email);
+      window.location.href = thankYouUrl.toString();
     } catch {
       setError("Network error. Please check your connection and try again.");
       setSubmitting(false);

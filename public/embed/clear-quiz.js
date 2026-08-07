@@ -276,7 +276,10 @@
         });
       })
       .then(function () {
-        window.location.href = "https://clear20.findlocal.au/leadgen/thankyoupage";
+        var thankYouUrl = new URL("https://clear20.findlocal.au/leadgen/thankyoupage");
+        thankYouUrl.searchParams.set("name", state.name);
+        thankYouUrl.searchParams.set("email", state.email);
+        window.location.href = thankYouUrl.toString();
       })
       .catch(function (err) {
         submitting = false;
