@@ -27,17 +27,27 @@ export default function PhotoUploadForm() {
   const hasLeadParams = Boolean(paramName && paramEmail && paramPhone);
   const tracking = trackingParamsFromSearchParams(searchParams);
 
+  const totalSteps = hasLeadParams ? 3 : 4;
+
+  const [step, setStep] = useState(1);
   const [status, setStatus] = useState<Status>("idle");
   const [errorMessage, setErrorMessage] = useState("");
-  const [images, setImages] = useState<ImageItem[]>([]);
+  const [meterImages, setMeterImages] = useState<ImageItem[]>([]);
+  const [frontageImages, setFrontageImages] = useState<ImageItem[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [ageLocation, setAgeLocation] = useState({ age: "", location: "" });
+  const [ageLocationErrors, setAgeLocationErrors] = useState<Record<string, string>>({});
   const [contact, setContact] = useState({ name: "", email: "", phone: "" });
   const [contactErrors, setContactErrors] = useState<Record<string, string>>({});
 
   const inputRef = useRef<HTMLInputElement>(null);
   const nextId = useRef(0);
 
-  async function handleFiles(fileList: FileList | File[] | undefined) {
+  async function handleFiles(
+    fileList: FileList | File[] | undefined,
+    images: ImageItem[],
+    setImages: (update: (prev: ImageItem[]) => ImageItem[]) => void
+  ) {
     if (!fileList || fileList.length === 0) return;
     const files = Array.from(fileList);
     setErrorMessage("");
@@ -68,7 +78,7 @@ export default function PhotoUploadForm() {
     setStatus("idle");
   }
 
-  function removeImage(id: string) {
+  function removeImage(id: string, setImages: (update: (prev: ImageItem[]) => ImageItem[]) => void) {
     setImages((prev) => {
       const target = prev.find((img) => img.id === id);
       if (target) URL.revokeObjectURL(target.previewUrl);
@@ -76,12 +86,48 @@ export default function PhotoUploadForm() {
     });
   }
 
-  async function onSubmit() {
-    if (images.length === 0) {
-      setErrorMessage("Please attach at least one photo.");
+  function goNext() {
+    setErrorMessage("");
+
+    if (step === 1) {
+      if (meterImages.length === 0) {
+        setErrorMessage("Please attach a photo of your water meter and surroundings.");
+        return;
+      }
+      setStep(2);
       return;
     }
 
+    if (step === 2) {
+      if (frontageImages.length === 0) {
+        setErrorMessage("Please attach a photo of the full frontage of your property.");
+        return;
+      }
+      setStep(3);
+      return;
+    }
+
+    if (step === 3) {
+      const errors: Record<string, string> = {};
+      if (!ageLocation.age.trim()) errors.age = "Please enter your age";
+      if (!ageLocation.location.trim()) errors.location = "Please enter your location";
+      setAgeLocationErrors(errors);
+      if (Object.keys(errors).length > 0) return;
+
+      if (hasLeadParams) {
+        onSubmit();
+      } else {
+        setStep(4);
+      }
+    }
+  }
+
+  function goBack() {
+    setErrorMessage("");
+    setStep((s) => Math.max(1, s - 1));
+  }
+
+  async function onSubmit() {
     let name = paramName;
     let email = paramEmail;
     let phone = paramPhone;
@@ -106,8 +152,11 @@ export default function PhotoUploadForm() {
     data.set("name", name);
     data.set("email", email);
     data.set("phone", phone);
+    data.set("age", ageLocation.age.trim());
+    data.set("location", ageLocation.location.trim());
     Object.entries(tracking).forEach(([key, value]) => data.set(key, value));
-    images.forEach((img) => data.append("image", img.file));
+    meterImages.forEach((img) => data.append("meterImage", img.file));
+    frontageImages.forEach((img) => data.append("frontageImage", img.file));
 
     try {
       const res = await fetch("/api/photo-upload", { method: "POST", body: data });
@@ -127,10 +176,61 @@ export default function PhotoUploadForm() {
   }
 
   const isBusy = status === "submitting" || status === "compressing";
+  const isLastStep = step === 3 && hasLeadParams;
+  const nextLabel =
+    status === "compressing" ? "Processing…" : status === "submitting" ? "Uploading…" : isLastStep ? "Upload & Continue" : "Next";
 
   return (
     <div className="upload-widget-font space-y-5">
-      {!hasLeadParams && (
+      <p className="text-xs font-semibold uppercase tracking-wide text-[#6B6B6B]">
+        Step {step} of {totalSteps}
+      </p>
+
+      {step === 1 && (
+        <PhotoStep
+          title="Photo of your water meter and surroundings"
+          images={meterImages}
+          isDragging={isDragging}
+          setIsDragging={setIsDragging}
+          inputRef={inputRef}
+          onFiles={(files) => handleFiles(files, meterImages, setMeterImages)}
+          onRemove={(id) => removeImage(id, setMeterImages)}
+        />
+      )}
+
+      {step === 2 && (
+        <PhotoStep
+          title="Full frontage photo of your property"
+          images={frontageImages}
+          isDragging={isDragging}
+          setIsDragging={setIsDragging}
+          inputRef={inputRef}
+          onFiles={(files) => handleFiles(files, frontageImages, setFrontageImages)}
+          onRemove={(id) => removeImage(id, setFrontageImages)}
+        />
+      )}
+
+      {step === 3 && (
+        <div className="space-y-3">
+          <ContactField
+            label="Age"
+            value={ageLocation.age}
+            error={ageLocationErrors.age}
+            onChange={(v) => setAgeLocation((p) => ({ ...p, age: v }))}
+            placeholder="35"
+            type="number"
+          />
+          <ContactField
+            label="Location"
+            value={ageLocation.location}
+            error={ageLocationErrors.location}
+            onChange={(v) => setAgeLocation((p) => ({ ...p, location: v }))}
+            placeholder="Suburb or postcode"
+          />
+        </div>
+      )}
+
+      {step === 4 && (
         <div className="space-y-3">
           <ContactField
             label="Full name"
@@ -161,6 +261,59 @@ export default function PhotoUploadForm() {
         </div>
       )}
 
+      {errorMessage && (
+        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-400">
+          {errorMessage}
+        </p>
+      )}
+
+      <div className="flex gap-3">
+        {step > 1 && (
+          <button
+            type="button"
+            onClick={goBack}
+            disabled={isBusy}
+            className="mt-5 w-1/3 rounded-lg border border-[#cfd6e0] bg-white p-3.5 text-sm font-extrabold tracking-[0.3px] text-[#1E1E1E] transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Back
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={step === 4 ? onSubmit : goNext}
+          disabled={isBusy}
+          className="mt-5 w-full rounded-lg border-none bg-[#297EFF] p-3.5 text-sm font-extrabold tracking-[0.3px] text-white transition-colors hover:bg-[#1a6ae8] disabled:cursor-not-allowed disabled:bg-[#c9d3e0]"
+        >
+          {step === 4
+            ? status === "submitting"
+              ? "Uploading…"
+              : "Upload & Continue"
+            : nextLabel}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function PhotoStep({
+  title,
+  images,
+  isDragging,
+  setIsDragging,
+  inputRef,
+  onFiles,
+  onRemove,
+}: {
+  title: string;
+  images: ImageItem[];
+  isDragging: boolean;
+  setIsDragging: (v: boolean) => void;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  onFiles: (files: FileList | File[] | undefined) => void;
+  onRemove: (id: string) => void;
+}) {
+  return (
+    <div className="space-y-3">
       <div
         onDragOver={(e) => {
           e.preventDefault();
@@ -170,7 +323,7 @@ export default function PhotoUploadForm() {
         onDrop={(e) => {
           e.preventDefault();
           setIsDragging(false);
-          handleFiles(e.dataTransfer.files);
+          onFiles(e.dataTransfer.files);
         }}
         onClick={() => inputRef.current?.click()}
         className={`cursor-pointer rounded-[14px] border border-dashed bg-white px-6 py-9 text-center transition-colors ${
@@ -182,9 +335,7 @@ export default function PhotoUploadForm() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0l-6 6m6-6l6 6" />
           </svg>
         </div>
-        <div className="text-base font-bold text-[#1E1E1E]">
-          Tap to take a photo or upload from your gallery
-        </div>
+        <div className="text-base font-bold text-[#1E1E1E]">{title}</div>
         <p className="mt-1 text-xs text-[#6B6B6B]">JPG or PNG, up to {MAX_IMAGE_MB}MB</p>
         <input
           ref={inputRef}
@@ -193,7 +344,7 @@ export default function PhotoUploadForm() {
           multiple
           className="hidden"
           onChange={(e) => {
-            handleFiles(e.target.files ?? undefined);
+            onFiles(e.target.files ?? undefined);
             e.target.value = "";
           }}
         />
@@ -209,7 +360,7 @@ export default function PhotoUploadForm() {
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  removeImage(img.id);
+                  onRemove(img.id);
                 }}
                 aria-label={`Remove ${img.file.name}`}
                 className="absolute top-1 right-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
@@ -222,21 +373,6 @@ export default function PhotoUploadForm() {
           ))}
         </div>
       )}
-
-      {errorMessage && (
-        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-400">
-          {errorMessage}
-        </p>
-      )}
-
-      <button
-        type="button"
-        onClick={onSubmit}
-        disabled={isBusy || images.length === 0}
-        className="mt-5 w-full rounded-lg border-none bg-[#297EFF] p-3.5 text-sm font-extrabold tracking-[0.3px] text-white transition-colors hover:bg-[#1a6ae8] disabled:cursor-not-allowed disabled:bg-[#c9d3e0]"
-      >
-        {status === "compressing" ? "Processing…" : status === "submitting" ? "Uploading…" : "Upload & Continue"}
-      </button>
     </div>
   );
 }
@@ -267,7 +403,7 @@ function ContactField({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         autoComplete={autoComplete}
-        className={`w-full rounded-lg border px-4 py-2.5 text-sm outline-none transition-colors ${
+        className={`w-full rounded-lg border bg-white px-4 py-2.5 text-sm text-[#1E1E1E] outline-none transition-colors placeholder:text-[#9CA3AF] ${
           error ? "border-red-300 focus:border-red-500" : "border-[#cfd6e0] focus:border-[#297EFF]"
         }`}
       />

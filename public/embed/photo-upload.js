@@ -39,6 +39,7 @@
   var CLIENT_TARGET_BYTES = 4 * 1024 * 1024;
   var MAX_DIMENSION = 2200;
   var ACCEPTED = ["image/jpeg", "image/png", "image/webp"];
+  var TOTAL_STEPS = hasLeadParams ? 3 : 4;
 
   if (!document.getElementById("c2o-upload-style")) {
     var style = document.createElement("style");
@@ -47,6 +48,7 @@
       '@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");' +
       "#" + targetId + ", #" + targetId + " *{box-sizing:border-box;}" +
       "#" + targetId + "{font-family:'Plus Jakarta Sans',sans-serif;margin:32px 0;}" +
+      "#" + targetId + " .u-step{margin:0 0 12px;font-size:12px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#6B6B6B;}" +
       "#" + targetId + " .u-drop{cursor:pointer;border-radius:14px;border:1px dashed #cfd6e0;background:#fff;padding:36px 24px;text-align:center;transition:border-color .2s ease,background .2s ease;}" +
       "#" + targetId + " .u-drop.drag{border-color:#297EFF;background:#F3FAF9;}" +
       "#" + targetId + " .u-icon{margin:0 auto 16px;width:52px;height:52px;border-radius:50%;background:#297EFF;display:flex;align-items:center;justify-content:center;}" +
@@ -58,30 +60,73 @@
       "#" + targetId + " .u-thumb img{width:100%;height:100%;object-fit:cover;display:block;}" +
       "#" + targetId + " .u-thumb button{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;cursor:pointer;font-size:13px;line-height:1;}" +
       "#" + targetId + " .u-error{margin-top:14px;border-radius:8px;background:#fef2f2;color:#b91c1c;font-size:13px;padding:10px 14px;}" +
-      "#" + targetId + " .u-btn{margin-top:20px;width:100%;border:none;border-radius:8px;padding:14px;font-size:14px;font-weight:800;letter-spacing:.3px;color:#fff;background:#297EFF;cursor:pointer;transition:background .2s ease;}" +
+      "#" + targetId + " .u-actions{margin-top:20px;display:flex;gap:12px;}" +
+      "#" + targetId + " .u-btn{width:100%;border:none;border-radius:8px;padding:14px;font-size:14px;font-weight:800;letter-spacing:.3px;color:#fff;background:#297EFF;cursor:pointer;transition:background .2s ease;}" +
       "#" + targetId + " .u-btn:disabled{background:#c9d3e0;cursor:not-allowed;}" +
-      "#" + targetId + " .u-contact{margin-bottom:20px;}" +
+      "#" + targetId + " .u-btn-back{width:33%;background:#fff;color:#1E1E1E;border:1px solid #cfd6e0;}" +
+      "#" + targetId + " .u-contact{margin-bottom:0;}" +
       "#" + targetId + " .u-field{margin-bottom:12px;}" +
       "#" + targetId + " .u-field label{display:block;font-size:13px;font-weight:600;color:#1E1E1E;margin-bottom:6px;}" +
-      "#" + targetId + " .u-field input{width:100%;box-sizing:border-box;border:1px solid #cfd6e0;border-radius:8px;padding:10px 14px;font-size:14px;font-family:inherit;}" +
+      "#" + targetId + " .u-field input{width:100%;box-sizing:border-box;border:1px solid #cfd6e0;border-radius:8px;padding:10px 14px;font-size:14px;font-family:inherit;color:#1E1E1E;background:#fff;}" +
+      "#" + targetId + " .u-field input::placeholder{color:#9CA3AF;}" +
       "#" + targetId + " .u-field input.err{border-color:#fca5a5;}" +
       "#" + targetId + " .u-field .u-ferr{margin-top:4px;font-size:12px;color:#dc2626;}";
     document.head.appendChild(style);
   }
 
-  var images = []; // {id, file, previewUrl}
+  var step = 1;
+  var meterImages = []; // {id, file, previewUrl}
+  var frontageImages = [];
   var nextId = 0;
   var isDragging = false;
   var errorMessage = "";
   var status = "idle"; // idle | compressing | submitting | error
+  var ageLocation = { age: "", location: "" };
+  var ageLocationErrors = {};
   var contact = { name: "", email: "", phone: "" };
   var contactErrors = {};
 
+  function currentImages() {
+    return step === 1 ? meterImages : frontageImages;
+  }
+  function setCurrentImages(images) {
+    if (step === 1) meterImages = images;
+    else frontageImages = images;
+  }
+  function isLastStep() {
+    return step === 3 && hasLeadParams;
+  }
+
   function render() {
     var busy = status === "submitting" || status === "compressing";
-    var btnLabel =
-      status === "compressing" ? "Processing…" : status === "submitting" ? "Uploading…" : "Upload & Continue";
+    var nextLabel = status === "compressing" ? "Processing…" : status === "submitting" ? "Uploading…" : isLastStep() || step === 4 ? "Upload & Continue" : "Next";
 
+    var body = "";
+    if (step === 1) body = photoStepHtml("Photo of your water meter and surroundings", meterImages);
+    else if (step === 2) body = photoStepHtml("Full frontage photo of your property", frontageImages);
+    else if (step === 3) body = ageLocationStepHtml();
+    else body = contactStepHtml();
+
+    var actions =
+      '<div class="u-actions">' +
+      (step > 1 ? '<button type="button" class="u-btn u-btn-back" id="c2o-back-btn"' + (busy ? " disabled" : "") + ">Back</button>" : "") +
+      '<button type="button" class="u-btn" id="c2o-next-btn"' +
+      (busy ? " disabled" : "") +
+      ">" +
+      nextLabel +
+      "</button></div>";
+
+    root.innerHTML =
+      '<div><div class="u-step">Step ' + step + " of " + TOTAL_STEPS + "</div>" +
+      body +
+      (errorMessage ? '<div class="u-error">' + escapeHtml(errorMessage) + "</div>" : "") +
+      actions +
+      "</div>";
+
+    wireEvents();
+  }
+
+  function photoStepHtml(title, images) {
     var thumbs = "";
     if (images.length > 0) {
       thumbs = '<div class="u-previews">';
@@ -96,46 +141,51 @@
       thumbs += "</div>";
     }
 
-    var contactHtml = hasLeadParams ? "" : '<div class="u-contact">' +
-      contactField("name", "Full name", "text", "Jane Smith") +
-      contactField("email", "Email", "email", "jane@example.com") +
-      contactField("phone", "Phone number", "tel", "+61 400 000 000") +
-      "</div>";
-
-    root.innerHTML =
-      '<div>' +
-      contactHtml +
+    return (
       '<div class="u-drop' +
       (isDragging ? " drag" : "") +
       '"><div class="u-icon">' +
       arrowIcon() +
-      '</div><div class="u-title">Tap to take a photo or upload from your gallery</div>' +
-      '<div class="u-hint">JPG or PNG, up to ' +
+      '</div><div class="u-title">' +
+      escapeHtml(title) +
+      '</div><div class="u-hint">JPG or PNG, up to ' +
       MAX_IMAGE_MB +
       'MB</div>' +
       '<input type="file" accept="image/jpeg,image/png,image/webp" multiple style="display:none" id="c2o-file-input"></div>' +
-      thumbs +
-      (errorMessage ? '<div class="u-error">' + escapeHtml(errorMessage) + "</div>" : "") +
-      '<button type="button" class="u-btn" id="c2o-upload-btn"' +
-      (busy || images.length === 0 ? " disabled" : "") +
-      ">" +
-      btnLabel +
-      "</button></div>";
-
-    wireEvents();
+      thumbs
+    );
   }
 
-  function contactField(key, label, type, placeholder) {
-    var err = contactErrors[key];
+  function ageLocationStepHtml() {
+    return (
+      '<div class="u-contact">' +
+      textField("age", "Age", "number", "35", ageLocation, ageLocationErrors) +
+      textField("location", "Location", "text", "Suburb or postcode", ageLocation, ageLocationErrors) +
+      "</div>"
+    );
+  }
+
+  function contactStepHtml() {
+    return (
+      '<div class="u-contact">' +
+      textField("name", "Full name", "text", "Jane Smith", contact, contactErrors) +
+      textField("email", "Email", "email", "jane@example.com", contact, contactErrors) +
+      textField("phone", "Phone number", "tel", "+61 400 000 000", contact, contactErrors) +
+      "</div>"
+    );
+  }
+
+  function textField(key, label, type, placeholder, state, errors) {
+    var err = errors[key];
     return (
       '<div class="u-field"><label>' +
       label +
       '</label><input type="' +
       type +
-      '" id="c2o-contact-' +
+      '" id="c2o-field-' +
       key +
       '" value="' +
-      escapeHtml(contact[key]) +
+      escapeHtml(state[key]) +
       '" placeholder="' +
       placeholder +
       '" class="' +
@@ -156,50 +206,63 @@
   }
 
   function wireEvents() {
-    ["name", "email", "phone"].forEach(function (key) {
-      var el = document.getElementById("c2o-contact-" + key);
-      if (el) el.addEventListener("input", function () { contact[key] = el.value; });
-    });
+    if (step === 3) {
+      ["age", "location"].forEach(function (key) {
+        var el = document.getElementById("c2o-field-" + key);
+        if (el) el.addEventListener("input", function () { ageLocation[key] = el.value; });
+      });
+    } else if (step === 4) {
+      ["name", "email", "phone"].forEach(function (key) {
+        var el = document.getElementById("c2o-field-" + key);
+        if (el) el.addEventListener("input", function () { contact[key] = el.value; });
+      });
+    }
 
     var drop = root.querySelector(".u-drop");
-    var input = document.getElementById("c2o-file-input");
+    if (drop) {
+      var input = document.getElementById("c2o-file-input");
 
-    drop.addEventListener("click", function () {
-      input.click();
-    });
-    drop.addEventListener("dragover", function (e) {
-      e.preventDefault();
-      isDragging = true;
-      drop.classList.add("drag");
-    });
-    drop.addEventListener("dragleave", function () {
-      isDragging = false;
-      drop.classList.remove("drag");
-    });
-    drop.addEventListener("drop", function (e) {
-      e.preventDefault();
-      isDragging = false;
-      handleFiles(e.dataTransfer.files);
-    });
-    input.addEventListener("change", function (e) {
-      handleFiles(e.target.files);
-      e.target.value = "";
-    });
-
-    root.querySelectorAll("[data-remove]").forEach(function (btn) {
-      btn.addEventListener("click", function (e) {
-        e.stopPropagation();
-        removeImage(btn.getAttribute("data-remove"));
+      drop.addEventListener("click", function () {
+        input.click();
       });
-    });
+      drop.addEventListener("dragover", function (e) {
+        e.preventDefault();
+        isDragging = true;
+        drop.classList.add("drag");
+      });
+      drop.addEventListener("dragleave", function () {
+        isDragging = false;
+        drop.classList.remove("drag");
+      });
+      drop.addEventListener("drop", function (e) {
+        e.preventDefault();
+        isDragging = false;
+        handleFiles(e.dataTransfer.files);
+      });
+      input.addEventListener("change", function (e) {
+        handleFiles(e.target.files);
+        e.target.value = "";
+      });
 
-    var uploadBtn = document.getElementById("c2o-upload-btn");
-    if (uploadBtn) uploadBtn.addEventListener("click", submit);
+      root.querySelectorAll("[data-remove]").forEach(function (btn) {
+        btn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          removeImage(btn.getAttribute("data-remove"));
+        });
+      });
+    }
+
+    var backBtn = document.getElementById("c2o-back-btn");
+    if (backBtn) backBtn.addEventListener("click", goBack);
+
+    var nextBtn = document.getElementById("c2o-next-btn");
+    if (nextBtn) nextBtn.addEventListener("click", step === 4 ? submit : goNext);
   }
 
   function handleFiles(fileList) {
     if (!fileList || fileList.length === 0) return;
     var files = Array.prototype.slice.call(fileList);
+    var images = currentImages();
     errorMessage = "";
 
     if (images.length + files.length > MAX_IMAGES) {
@@ -222,9 +285,11 @@
     render();
 
     Promise.all(files.map(compressImage)).then(function (compressed) {
+      var updated = currentImages();
       compressed.forEach(function (file) {
-        images.push({ id: String(nextId++), file: file, previewUrl: URL.createObjectURL(file) });
+        updated = updated.concat([{ id: String(nextId++), file: file, previewUrl: URL.createObjectURL(file) }]);
       });
+      setCurrentImages(updated);
       status = "idle";
       render();
     });
@@ -269,23 +334,67 @@
   }
 
   function removeImage(id) {
+    var images = currentImages();
     var target = images.find(function (img) {
       return img.id === id;
     });
     if (target) URL.revokeObjectURL(target.previewUrl);
-    images = images.filter(function (img) {
+    setCurrentImages(images.filter(function (img) {
       return img.id !== id;
-    });
+    }));
     render();
   }
 
-  function submit() {
-    if (images.length === 0) {
-      errorMessage = "Please attach at least one photo.";
+  function goBack() {
+    errorMessage = "";
+    step = Math.max(1, step - 1);
+    render();
+  }
+
+  function goNext() {
+    errorMessage = "";
+
+    if (step === 1) {
+      if (meterImages.length === 0) {
+        errorMessage = "Please attach a photo of your water meter and surroundings.";
+        render();
+        return;
+      }
+      step = 2;
       render();
       return;
     }
 
+    if (step === 2) {
+      if (frontageImages.length === 0) {
+        errorMessage = "Please attach a photo of the full frontage of your property.";
+        render();
+        return;
+      }
+      step = 3;
+      render();
+      return;
+    }
+
+    if (step === 3) {
+      var errors = {};
+      if (!ageLocation.age.trim()) errors.age = "Please enter your age";
+      if (!ageLocation.location.trim()) errors.location = "Please enter your location";
+      ageLocationErrors = errors;
+      if (Object.keys(errors).length > 0) {
+        render();
+        return;
+      }
+      if (hasLeadParams) {
+        submit();
+      } else {
+        step = 4;
+        render();
+      }
+    }
+  }
+
+  function submit() {
     var name = leadName;
     var email = leadEmail;
     var phone = leadPhone;
@@ -313,11 +422,16 @@
     data.set("name", name);
     data.set("email", email);
     data.set("phone", phone);
+    data.set("age", ageLocation.age.trim());
+    data.set("location", ageLocation.location.trim());
     Object.keys(leadTracking).forEach(function (key) {
       data.set(key, leadTracking[key]);
     });
-    images.forEach(function (img) {
-      data.append("image", img.file);
+    meterImages.forEach(function (img) {
+      data.append("meterImage", img.file);
+    });
+    frontageImages.forEach(function (img) {
+      data.append("frontageImage", img.file);
     });
 
     fetch(apiBase + "/api/photo-upload", { method: "POST", body: data })
