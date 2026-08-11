@@ -5,12 +5,13 @@ import { useSearchParams } from "next/navigation";
 import { trackingParamsFromSearchParams } from "@/lib/trackingParams";
 import "./clear-quiz.css";
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 7;
 const AUTO_ADVANCE_MS = 350;
 const EMAIL_RE = /^\S+@\S+\.\S+$/;
 
 type QuizState = {
   ownsHome: string;
+  propertyAge: string;
   financing: string;
   name: string;
   phone: string;
@@ -20,6 +21,7 @@ type QuizState = {
 
 const EMPTY_STATE: QuizState = {
   ownsHome: "",
+  propertyAge: "",
   financing: "",
   name: "",
   phone: "",
@@ -34,7 +36,7 @@ export default function ClearQuiz() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  function select(field: "ownsHome" | "financing", value: string, nextStep: number) {
+  function select(field: "ownsHome" | "propertyAge" | "financing", value: string, nextStep: number) {
     setState((prev) => ({ ...prev, [field]: value }));
     setTimeout(() => setStep(nextStep), AUTO_ADVANCE_MS);
   }
@@ -87,7 +89,7 @@ export default function ClearQuiz() {
 
         {step === 1 && (
           <div className="c2o-step">
-            <div className="qtag">Step 1 of 6</div>
+            <div className="qtag">Step 1 of 7</div>
             <h3>Do you own your home?</h3>
             <p className="qsub">This affects whether we can proceed straight to install, or need to loop in a landlord.</p>
 
@@ -119,7 +121,52 @@ export default function ClearQuiz() {
 
         {step === 2 && (
           <div className="c2o-step">
-            <div className="qtag">Step 2 of 6</div>
+            <div className="qtag">Step 2 of 7</div>
+            <h3>How old is your property?</h3>
+            <p className="qsub">Helps us gauge the condition of your existing plumbing and roof.</p>
+
+            <div className="c2o-opt-grid">
+              <Option
+                icon={<path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" />}
+                title="0-5 years"
+                sub="Newly built or recently renovated"
+                selected={state.propertyAge === "0-5 years"}
+                onClick={() => select("propertyAge", "0-5 years", 3)}
+              />
+              <Option
+                icon={<path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" />}
+                title="6-15 years"
+                sub="Established property"
+                selected={state.propertyAge === "6-15 years"}
+                onClick={() => select("propertyAge", "6-15 years", 3)}
+              />
+              <Option
+                icon={<path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" />}
+                title="16-30 years"
+                sub="Older property"
+                selected={state.propertyAge === "16-30 years"}
+                onClick={() => select("propertyAge", "16-30 years", 3)}
+              />
+              <Option
+                icon={<path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" />}
+                title="30+ years"
+                sub="Well-established property"
+                selected={state.propertyAge === "30+ years"}
+                onClick={() => select("propertyAge", "30+ years", 3)}
+              />
+            </div>
+
+            <div className="c2o-nav">
+              <button type="button" className="back-link" onClick={() => setStep(1)}>
+                ← Back
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="c2o-step">
+            <div className="qtag">Step 3 of 7</div>
             <h3>Would you like to use financing?</h3>
             <p className="qsub">For your $2,599 fixed-price system.</p>
 
@@ -134,14 +181,14 @@ export default function ClearQuiz() {
                 title="Yes - I'll use your financing"
                 sub="Spread the $2,599 cost over time"
                 selected={state.financing === "Yes - I'll use your financing"}
-                onClick={() => select("financing", "Yes - I'll use your financing", 3)}
+                onClick={() => select("financing", "Yes - I'll use your financing", 4)}
               />
               <Option
                 icon={<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />}
                 title="No - I can pay upfront"
                 sub="Pay the fixed price in full"
                 selected={state.financing === "No - I can pay upfront"}
-                onClick={() => select("financing", "No - I can pay upfront", 3)}
+                onClick={() => select("financing", "No - I can pay upfront", 4)}
               />
               <Option
                 icon={
@@ -153,42 +200,27 @@ export default function ClearQuiz() {
                 title="I am not interested in buying"
                 sub="Just checking things out for now"
                 selected={state.financing === "I am not interested in buying"}
-                onClick={() => select("financing", "I am not interested in buying", 3)}
+                onClick={() => select("financing", "I am not interested in buying", 4)}
               />
             </div>
 
             <div className="c2o-nav">
-              <button type="button" className="back-link" onClick={() => setStep(1)}>
+              <button type="button" className="back-link" onClick={() => setStep(2)}>
                 ← Back
               </button>
             </div>
           </div>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <FieldStep
-            tag="Step 3 of 6"
+            tag="Step 4 of 7"
             title="What's your name?"
             sub="So we know who we're talking to when we call."
             label="Full name"
             placeholder="Jordan Smith"
             value={state.name}
             onChange={(v) => setState((p) => ({ ...p, name: v }))}
-            onBack={() => setStep(2)}
-            onNext={() => setStep(4)}
-          />
-        )}
-
-        {step === 4 && (
-          <FieldStep
-            tag="Step 4 of 6"
-            title="What's the best number to reach you?"
-            sub="We'll call to confirm your free installation."
-            label="Phone number"
-            placeholder="04xx xxx xxx"
-            type="tel"
-            value={state.phone}
-            onChange={(v) => setState((p) => ({ ...p, phone: v }))}
             onBack={() => setStep(3)}
             onNext={() => setStep(5)}
           />
@@ -196,7 +228,22 @@ export default function ClearQuiz() {
 
         {step === 5 && (
           <FieldStep
-            tag="Step 5 of 6"
+            tag="Step 5 of 7"
+            title="What's the best number to reach you?"
+            sub="We'll call to confirm your free installation."
+            label="Phone number"
+            placeholder="04xx xxx xxx"
+            type="tel"
+            value={state.phone}
+            onChange={(v) => setState((p) => ({ ...p, phone: v }))}
+            onBack={() => setStep(4)}
+            onNext={() => setStep(6)}
+          />
+        )}
+
+        {step === 6 && (
+          <FieldStep
+            tag="Step 6 of 7"
             title="What's your email address?"
             sub="We'll send your booking confirmation and install details here."
             label="Email"
@@ -204,15 +251,15 @@ export default function ClearQuiz() {
             type="email"
             value={state.email}
             onChange={(v) => setState((p) => ({ ...p, email: v }))}
-            onBack={() => setStep(4)}
-            onNext={() => setStep(6)}
+            onBack={() => setStep(5)}
+            onNext={() => setStep(7)}
             isValid={(v) => EMAIL_RE.test(v.trim())}
           />
         )}
 
-        {step === 6 && (
+        {step === 7 && (
           <div className="c2o-step">
-            <div className="qtag">Step 6 of 6</div>
+            <div className="qtag">Step 7 of 7</div>
             <h3>Which suburb are you in?</h3>
             <p className="qsub">Helps us confirm we cover your area.</p>
 
@@ -238,7 +285,7 @@ export default function ClearQuiz() {
             )}
 
             <div className="c2o-nav">
-              <button type="button" className="back-link" onClick={() => setStep(5)}>
+              <button type="button" className="back-link" onClick={() => setStep(6)}>
                 ← Back
               </button>
               <button type="button" className="c2o-btn c2o-btn-primary" onClick={submit} disabled={submitting}>

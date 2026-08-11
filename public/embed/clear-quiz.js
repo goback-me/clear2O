@@ -80,6 +80,7 @@
     cash: '<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
     na: '<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/>',
     shield: '<rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
+    age: '<path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/>',
   };
 
   function svg(path, strokeWidth) {
@@ -92,8 +93,8 @@
     );
   }
 
-  var TOTAL = 6;
-  var state = { ownsHome: "", financing: "", name: "", phone: "", email: "", suburb: "" };
+  var TOTAL = 7;
+  var state = { ownsHome: "", propertyAge: "", financing: "", name: "", phone: "", email: "", suburb: "" };
   var step = 1;
   var submitting = false;
   var errorMsg = "";
@@ -122,7 +123,7 @@
     var body = "";
     if (step === 1) {
       body =
-        '<div class="qtag">Step 1 of 6</div><h3>Do you own your home?</h3>' +
+        '<div class="qtag">Step 1 of 7</div><h3>Do you own your home?</h3>' +
         '<p class="qsub">This affects whether we can proceed straight to install, or need to loop in a landlord.</p>' +
         '<div class="c2o-opt-grid">' +
         opt("ownsHome", "Yes, I own it", "We can go ahead and confirm your install", ICONS.home, 2) +
@@ -133,30 +134,41 @@
         "Your information is secure.</div>";
     } else if (step === 2) {
       body =
-        '<div class="qtag">Step 2 of 6</div><h3>Would you like to use financing?</h3>' +
-        '<p class="qsub">For your $2,599 fixed-price system.</p>' +
+        '<div class="qtag">Step 2 of 7</div><h3>How old is your property?</h3>' +
+        '<p class="qsub">Helps us gauge the condition of your existing plumbing and roof.</p>' +
         '<div class="c2o-opt-grid">' +
-        opt("financing", "Yes - I'll use your financing", "Spread the $2,599 cost over time", ICONS.card, 3) +
-        opt("financing", "No - I can pay upfront", "Pay the fixed price in full", ICONS.cash, 3) +
-        opt("financing", "I am not interested in buying", "Just checking things out for now", ICONS.na, 3) +
+        opt("propertyAge", "0-5 years", "Newly built or recently renovated", ICONS.age, 3) +
+        opt("propertyAge", "6-15 years", "Established property", ICONS.age, 3) +
+        opt("propertyAge", "16-30 years", "Older property", ICONS.age, 3) +
+        opt("propertyAge", "30+ years", "Well-established property", ICONS.age, 3) +
         "</div>" +
         '<div class="c2o-nav"><button type="button" class="c2o-back" data-back="1">← Back</button></div>';
     } else if (step === 3) {
-      body = fieldStep("Step 3 of 6", "What's your name?", "So we know who we're talking to when we call.", "name", "text", "Full name", "Jordan Smith", 2, 4);
-    } else if (step === 4) {
-      body = fieldStep("Step 4 of 6", "What's the best number to reach you?", "We'll call to confirm your free installation.", "phone", "tel", "Phone number", "04xx xxx xxx", 3, 5);
-    } else if (step === 5) {
-      body = fieldStep("Step 5 of 6", "What's your email address?", "We'll send your booking confirmation and install details here.", "email", "email", "Email", "jordan@example.com", 4, 6);
-    } else if (step === 6) {
       body =
-        '<div class="qtag">Step 6 of 6</div><h3>Which suburb are you in?</h3>' +
+        '<div class="qtag">Step 3 of 7</div><h3>Would you like to use financing?</h3>' +
+        '<p class="qsub">For your $2,599 fixed-price system.</p>' +
+        '<div class="c2o-opt-grid">' +
+        opt("financing", "Yes - I'll use your financing", "Spread the $2,599 cost over time", ICONS.card, 4) +
+        opt("financing", "No - I can pay upfront", "Pay the fixed price in full", ICONS.cash, 4) +
+        opt("financing", "I am not interested in buying", "Just checking things out for now", ICONS.na, 4) +
+        "</div>" +
+        '<div class="c2o-nav"><button type="button" class="c2o-back" data-back="2">← Back</button></div>';
+    } else if (step === 4) {
+      body = fieldStep("Step 4 of 7", "What's your name?", "So we know who we're talking to when we call.", "name", "text", "Full name", "Jordan Smith", 3, 5);
+    } else if (step === 5) {
+      body = fieldStep("Step 5 of 7", "What's the best number to reach you?", "We'll call to confirm your free installation.", "phone", "tel", "Phone number", "04xx xxx xxx", 4, 6);
+    } else if (step === 6) {
+      body = fieldStep("Step 6 of 7", "What's your email address?", "We'll send your booking confirmation and install details here.", "email", "email", "Email", "jordan@example.com", 5, 7);
+    } else if (step === 7) {
+      body =
+        '<div class="qtag">Step 7 of 7</div><h3>Which suburb are you in?</h3>' +
         '<p class="qsub">Helps us confirm we cover your area.</p>' +
         '<div class="c2o-field"><label for="c2o-suburb">Suburb</label>' +
         '<input id="c2o-suburb" type="text" placeholder="Joondalup" value="' +
         escapeHtml(state.suburb) +
         '"></div>' +
         (errorMsg ? '<p class="c2o-err">' + escapeHtml(errorMsg) + "</p>" : "") +
-        '<div class="c2o-nav"><button type="button" class="c2o-back" data-back="5">← Back</button>' +
+        '<div class="c2o-nav"><button type="button" class="c2o-back" data-back="6">← Back</button>' +
         '<button type="button" class="c2o-btn c2o-btn-primary" id="c2o-submit"' +
         (submitting ? " disabled" : "") +
         ">" +

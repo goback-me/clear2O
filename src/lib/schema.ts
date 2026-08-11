@@ -35,6 +35,7 @@ export type ContactFields = z.infer<typeof contactFieldsSchema>;
 
 export const quizFieldsSchema = z.object({
   ownsHome: z.string().min(1, "Please answer whether you own your home"),
+  propertyAge: z.string().min(1, "Please tell us how old your property is"),
   financing: z.string().min(1, "Please choose a financing option"),
   name: z.string().trim().min(2, "Please enter your full name").max(100, "Name is too long"),
   phone: z
