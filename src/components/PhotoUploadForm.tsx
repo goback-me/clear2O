@@ -18,6 +18,23 @@ type ImageItem = {
 const MAX_IMAGE_MB = Math.round(MAX_IMAGE_BYTES / (1024 * 1024));
 const EMAIL_RE = /^\S+@\S+\.\S+$/;
 const PHONE_RE = /^[0-9+()\-.\s]{7,20}$/;
+const PHONE_CHAR_RE = /[^0-9+()\-.\s]/g;
+const AGE_CHAR_RE = /[^0-9]/g;
+
+function validateContactField(key: "name" | "email" | "phone", value: string): string | undefined {
+  if (key === "name") return value.trim().length < 2 ? "Please enter your full name" : undefined;
+  if (key === "email") return !EMAIL_RE.test(value.trim()) ? "Please enter a valid email address" : undefined;
+  if (key === "phone") return !PHONE_RE.test(value.trim()) ? "Please enter a valid phone number" : undefined;
+}
+
+function validateAgeLocationField(key: "age" | "location", value: string): string | undefined {
+  if (key === "age") {
+    const age = Number(value.trim());
+    if (!value.trim() || !Number.isInteger(age) || age < 1 || age > 120) return "Please enter a valid age";
+    return undefined;
+  }
+  return value.trim().length < 2 ? "Please enter your location" : undefined;
+}
 
 export default function PhotoUploadForm() {
   const searchParams = useSearchParams();
@@ -36,9 +53,9 @@ export default function PhotoUploadForm() {
   const [frontageImages, setFrontageImages] = useState<ImageItem[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [ageLocation, setAgeLocation] = useState({ age: "", location: "" });
-  const [ageLocationErrors, setAgeLocationErrors] = useState<Record<string, string>>({});
+  const [ageLocationErrors, setAgeLocationErrors] = useState<Record<string, string | undefined>>({});
   const [contact, setContact] = useState({ name: "", email: "", phone: "" });
-  const [contactErrors, setContactErrors] = useState<Record<string, string>>({});
+  const [contactErrors, setContactErrors] = useState<Record<string, string | undefined>>({});
 
   const inputRef = useRef<HTMLInputElement>(null);
   const nextId = useRef(0);
@@ -109,8 +126,10 @@ export default function PhotoUploadForm() {
 
     if (step === 3) {
       const errors: Record<string, string> = {};
-      if (!ageLocation.age.trim()) errors.age = "Please enter your age";
-      if (!ageLocation.location.trim()) errors.location = "Please enter your location";
+      const age = validateAgeLocationField("age", ageLocation.age);
+      const location = validateAgeLocationField("location", ageLocation.location);
+      if (age) errors.age = age;
+      if (location) errors.location = location;
       setAgeLocationErrors(errors);
       if (Object.keys(errors).length > 0) return;
 
@@ -134,9 +153,12 @@ export default function PhotoUploadForm() {
 
     if (!hasLeadParams) {
       const errors: Record<string, string> = {};
-      if (contact.name.trim().length < 2) errors.name = "Please enter your full name";
-      if (!EMAIL_RE.test(contact.email.trim())) errors.email = "Please enter a valid email address";
-      if (!PHONE_RE.test(contact.phone.trim())) errors.phone = "Please enter a valid phone number";
+      const name_ = validateContactField("name", contact.name);
+      const email_ = validateContactField("email", contact.email);
+      const phone_ = validateContactField("phone", contact.phone);
+      if (name_) errors.name = name_;
+      if (email_) errors.email = email_;
+      if (phone_) errors.phone = phone_;
       setContactErrors(errors);
       if (Object.keys(errors).length > 0) return;
 
@@ -216,7 +238,16 @@ export default function PhotoUploadForm() {
             label="Age"
             value={ageLocation.age}
             error={ageLocationErrors.age}
-            onChange={(v) => setAgeLocation((p) => ({ ...p, age: v }))}
+            onChange={(v) => {
+              const cleaned = v.replace(AGE_CHAR_RE, "");
+              setAgeLocation((p) => ({ ...p, age: cleaned }));
+              setAgeLocationErrors((prev) =>
+                prev.age ? { ...prev, age: validateAgeLocationField("age", cleaned) } : prev
+              );
+            }}
+            onBlur={() =>
+              setAgeLocationErrors((prev) => ({ ...prev, age: validateAgeLocationField("age", ageLocation.age) }))
+            }
             placeholder="35"
             type="number"
           />
@@ -224,7 +255,18 @@ export default function PhotoUploadForm() {
             label="Location"
             value={ageLocation.location}
             error={ageLocationErrors.location}
-            onChange={(v) => setAgeLocation((p) => ({ ...p, location: v }))}
+            onChange={(v) => {
+              setAgeLocation((p) => ({ ...p, location: v }));
+              setAgeLocationErrors((prev) =>
+                prev.location ? { ...prev, location: validateAgeLocationField("location", v) } : prev
+              );
+            }}
+            onBlur={() =>
+              setAgeLocationErrors((prev) => ({
+                ...prev,
+                location: validateAgeLocationField("location", ageLocation.location),
+              }))
+            }
             placeholder="Suburb or postcode"
           />
         </div>
@@ -236,7 +278,11 @@ export default function PhotoUploadForm() {
             label="Full name"
             value={contact.name}
             error={contactErrors.name}
-            onChange={(v) => setContact((p) => ({ ...p, name: v }))}
+            onChange={(v) => {
+              setContact((p) => ({ ...p, name: v }));
+              setContactErrors((prev) => (prev.name ? { ...prev, name: validateContactField("name", v) } : prev));
+            }}
+            onBlur={() => setContactErrors((prev) => ({ ...prev, name: validateContactField("name", contact.name) }))}
             placeholder="Jane Smith"
             autoComplete="name"
           />
@@ -244,7 +290,13 @@ export default function PhotoUploadForm() {
             label="Email"
             value={contact.email}
             error={contactErrors.email}
-            onChange={(v) => setContact((p) => ({ ...p, email: v }))}
+            onChange={(v) => {
+              setContact((p) => ({ ...p, email: v }));
+              setContactErrors((prev) => (prev.email ? { ...prev, email: validateContactField("email", v) } : prev));
+            }}
+            onBlur={() =>
+              setContactErrors((prev) => ({ ...prev, email: validateContactField("email", contact.email) }))
+            }
             placeholder="jane@example.com"
             type="email"
             autoComplete="email"
@@ -253,7 +305,16 @@ export default function PhotoUploadForm() {
             label="Phone number"
             value={contact.phone}
             error={contactErrors.phone}
-            onChange={(v) => setContact((p) => ({ ...p, phone: v }))}
+            onChange={(v) => {
+              const cleaned = v.replace(PHONE_CHAR_RE, "");
+              setContact((p) => ({ ...p, phone: cleaned }));
+              setContactErrors((prev) =>
+                prev.phone ? { ...prev, phone: validateContactField("phone", cleaned) } : prev
+              );
+            }}
+            onBlur={() =>
+              setContactErrors((prev) => ({ ...prev, phone: validateContactField("phone", contact.phone) }))
+            }
             placeholder="+61 400 000 000"
             type="tel"
             autoComplete="tel"
@@ -382,6 +443,7 @@ function ContactField({
   value,
   error,
   onChange,
+  onBlur,
   placeholder,
   type = "text",
   autoComplete,
@@ -390,6 +452,7 @@ function ContactField({
   value: string;
   error?: string;
   onChange: (value: string) => void;
+  onBlur?: () => void;
   placeholder: string;
   type?: string;
   autoComplete?: string;
@@ -401,6 +464,7 @@ function ContactField({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
         placeholder={placeholder}
         autoComplete={autoComplete}
         className={`w-full rounded-lg border bg-white px-4 py-2.5 text-sm text-[#1E1E1E] outline-none transition-colors placeholder:text-[#9CA3AF] ${

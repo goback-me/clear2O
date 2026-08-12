@@ -384,7 +384,38 @@
     var hasLeadParams = Boolean(leadName && leadEmail && leadPhone);
     var EMAIL_RE = /^\S+@\S+\.\S+$/;
     var PHONE_RE = /^[0-9+()\-.\s]{7,20}$/;
+    var PHONE_CHAR_RE = /[^0-9+()\-.\s]/g;
+    var AGE_CHAR_RE = /[^0-9]/g;
     var leadTracking = getTrackingParams(pageParams);
+
+    function validateContactField(key, value) {
+      if (key === "name") return value.trim().length < 2 ? "Please enter your full name" : undefined;
+      if (key === "email") return !EMAIL_RE.test(value.trim()) ? "Please enter a valid email address" : undefined;
+      if (key === "phone") return !PHONE_RE.test(value.trim()) ? "Please enter a valid phone number" : undefined;
+    }
+
+    function validateAgeLocationField(key, value) {
+      if (key === "age") {
+        var age = Number(value.trim());
+        return !value.trim() || !Number.isInteger(age) || age < 1 || age > 120 ? "Please enter a valid age" : undefined;
+      }
+      return value.trim().length < 2 ? "Please enter your location" : undefined;
+    }
+
+    function updateFieldError(el, err) {
+      el.classList.toggle("err", Boolean(err));
+      var errEl = el.parentElement.querySelector(".u-ferr");
+      if (err) {
+        if (!errEl) {
+          errEl = document.createElement("div");
+          errEl.className = "u-ferr";
+          el.insertAdjacentElement("afterend", errEl);
+        }
+        errEl.textContent = err;
+      } else if (errEl) {
+        errEl.remove();
+      }
+    }
 
     var MAX_IMAGES = 10;
     var MAX_IMAGE_BYTES = 8 * 1024 * 1024;
@@ -556,12 +587,38 @@
       if (step === 3) {
         ["age", "location"].forEach(function (key) {
           var el = document.getElementById("c2o-field-" + key);
-          if (el) el.addEventListener("input", function () { ageLocation[key] = el.value; });
+          if (!el) return;
+          el.addEventListener("input", function () {
+            var value = key === "age" ? el.value.replace(AGE_CHAR_RE, "") : el.value;
+            if (value !== el.value) el.value = value;
+            ageLocation[key] = value;
+            if (ageLocationErrors[key]) {
+              ageLocationErrors[key] = validateAgeLocationField(key, value);
+              updateFieldError(el, ageLocationErrors[key]);
+            }
+          });
+          el.addEventListener("blur", function () {
+            ageLocationErrors[key] = validateAgeLocationField(key, ageLocation[key]);
+            updateFieldError(el, ageLocationErrors[key]);
+          });
         });
       } else if (step === 4) {
         ["name", "email", "phone"].forEach(function (key) {
           var el = document.getElementById("c2o-field-" + key);
-          if (el) el.addEventListener("input", function () { contact[key] = el.value; });
+          if (!el) return;
+          el.addEventListener("input", function () {
+            var value = key === "phone" ? el.value.replace(PHONE_CHAR_RE, "") : el.value;
+            if (value !== el.value) el.value = value;
+            contact[key] = value;
+            if (contactErrors[key]) {
+              contactErrors[key] = validateContactField(key, value);
+              updateFieldError(el, contactErrors[key]);
+            }
+          });
+          el.addEventListener("blur", function () {
+            contactErrors[key] = validateContactField(key, contact[key]);
+            updateFieldError(el, contactErrors[key]);
+          });
         });
       }
 
@@ -725,8 +782,10 @@
 
       if (step === 3) {
         var errors = {};
-        if (!ageLocation.age.trim()) errors.age = "Please enter your age";
-        if (!ageLocation.location.trim()) errors.location = "Please enter your location";
+        var ageErr = validateAgeLocationField("age", ageLocation.age);
+        var locationErr = validateAgeLocationField("location", ageLocation.location);
+        if (ageErr) errors.age = ageErr;
+        if (locationErr) errors.location = locationErr;
         ageLocationErrors = errors;
         if (Object.keys(errors).length > 0) {
           render();
@@ -748,9 +807,12 @@
 
       if (!hasLeadParams) {
         var errors = {};
-        if (contact.name.trim().length < 2) errors.name = "Please enter your full name";
-        if (!EMAIL_RE.test(contact.email.trim())) errors.email = "Please enter a valid email address";
-        if (!PHONE_RE.test(contact.phone.trim())) errors.phone = "Please enter a valid phone number";
+        var nameErr = validateContactField("name", contact.name);
+        var emailErr = validateContactField("email", contact.email);
+        var phoneErr = validateContactField("phone", contact.phone);
+        if (nameErr) errors.name = nameErr;
+        if (emailErr) errors.email = emailErr;
+        if (phoneErr) errors.phone = phoneErr;
         contactErrors = errors;
         if (Object.keys(errors).length > 0) {
           render();
